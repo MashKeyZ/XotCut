@@ -1,0 +1,66 @@
+import asyncio
+import websockets
+from pykeyboard import PyKeyboard
+
+k = PyKeyboard()
+
+async def keyboard_control(websocket, path):
+    async for message in websocket:
+        for c in message:
+            k.tap_key(c)
+
+start_server = websockets.serve(keyboard_control, "localhost", 8000)
+asyncio.get_event_loop().run_until_complete(start_server)
+asyncio.get_event_loop().run_forever()
+
+
+import asyncio
+import websockets
+
+async def echo(websocket):
+    async for message in websocket:
+        await websocket.send(message)
+
+async def main():
+    print("Server started...")
+    async with websockets.serve(echo, "localhost", 8765):
+        await asyncio.Future()  # run forever
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
+
+
+
+REACT
+
+import React, { useRef } from 'react';
+import { View, TextInput, Button } from 'react-native';
+import WebSocket from 'react-native-websocket';
+
+export default function App() {
+  const ws = useRef(null);
+  const [message, setMessage] = useState('');
+
+  const sendMessage = () => {
+    ws.current.send(message);
+  };
+
+  return (
+    <View>
+      <TextInput
+        value={message}
+        onChangeText={text => setMessage(text)}
+      />
+      <Button onPress={sendMessage} title="Send" />
+      <WebSocket
+        ref={ws}
+        url="ws://localhost:8000"
+        onOpen={() => console.log('WebSocket opened')}
+        onMessage={message => console.log(message)}
+        onClose={() => console.log('WebSocket closed')}
+      />
+    </View>
+  );
+}
