@@ -1,7 +1,9 @@
 import React,{useRef,useState,useEffect} from 'react'
-import { View, TextInput,Button,FlatList, Image,Text,StyleSheet,SafeAreaView,TouchableOpacity,ScrollView ,Animated} from 'react-native';
+import { View,Modal, TextInput,Button,FlatList, Image,Text,StyleSheet,SafeAreaView,TouchableOpacity,ScrollView ,Animated} from 'react-native';
 import WS from 'react-native-websocket';
 import Message from '../components/message';
+import QRCodeScanner from 'react-native-qrcode-scanner';
+import {RNCamera} from 'react-native-camera';
 //import { SafeAreaView } from 'react-native-safe-area-context';
 
 
@@ -10,6 +12,7 @@ export default function ChatScreen() {
     const flatListRef = useRef(null);
     const [message, setMessage] = useState('');
     const [response,setResponse] = useState('');
+    const [isVisible,setVisible] = useState(true)
     const [data,setData]=useState([
       {fromServer:true,text:"Hello"},
       {fromServer:true,text:"This App allows you to use your cellphone keyboard to type your Word documents."},
@@ -17,7 +20,7 @@ export default function ChatScreen() {
     ])
     //use websocket
     const [status,setStatus] = useState('Connecting...')
-    const [url, setUrl] = useState('ws://10.0.0.14:8080');
+    const [url, setUrl] = useState('ws://192.168.2.50:58825');
 
     const sendMsg = ()=> {
         console.log('Sending message : '+message)
@@ -47,6 +50,13 @@ export default function ChatScreen() {
         console.log("From Server : "+msg)
         const newMsg=[{fromServer:true,text:msg.data}]
         setData(data=>[...data,newMsg])
+      }
+
+      const onSuccess =(e)=>{
+        setUrl(e.data)
+        console.log(e.data)
+        setVisible(!isVisible);
+        console.log(url)
       }
 
   return (
@@ -107,13 +117,15 @@ export default function ChatScreen() {
             
         </View>
         <WS
-              ref={ws}
-              url={url}
-              onOpen={online}
-              onMessage={msg => fromServer(msg)}
-              onClose={offline}
-              reconnecting
-            />
+          ref={ws}
+          url={url}
+          onOpen={online}
+          onMessage={msg => fromServer(msg)}
+          onClose={offline}
+          reconnect
+        />
+        
+       
 
       {/*
         <View>
@@ -137,6 +149,23 @@ export default function ChatScreen() {
       />
    
   </View>*/}
+    <Modal
+    style={{justifyContent: 'center',display: 'flex'}}
+    transparent={true}
+    visible={isVisible}
+    >
+       <QRCodeScanner
+        style={styles.modal}
+        cameraStyle={styles.modal}
+        onRead={onSuccess}
+        flashMode={RNCamera.Constants.FlashMode.off}
+        topContent={
+          <Text style={styles.centerText}>
+            Scan the QR code on your computer
+          </Text>
+        }
+      />
+    </Modal>
  
     </SafeAreaView>
    
@@ -232,5 +261,34 @@ const styles = StyleSheet.create({
     maxHeight:'80%',
     width:'100%',
 
+  },
+  modal:{
+    height: '80%',
+    width: '70%',
+    alignSelf:'center',
+    justifyContent:'center',
+    marginTop:45,
+    borderRadius:20,
+    borderWidth:10,
+    borderColor:'rgba(142,238,215,0.75)',
+  },
+  centerText: {
+    fontSize: 18,
+    padding: 32,
+    color: '#777',
+    position:'absolute',
+    top:50,
+    fontWeight:'600'
+  },
+  textBold: {
+    fontWeight: '500',
+    color: '#000'
+  },
+  buttonText: {
+    fontSize: 21,
+    color: 'rgb(0,122,255)'
+  },
+  buttonTouchable: {
+    padding: 16
   }
 });
